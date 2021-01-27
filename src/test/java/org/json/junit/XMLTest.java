@@ -1094,18 +1094,13 @@ public class XMLTest {
     @Test
     public void testToJSONObjectWithReplacement() {
     	final String originalXml = "<root><id>01</id><id>1</id><id>00</id><id>0</id><item id=\"01\"/><title>True</title></root>";
-       // final JSONObject expected = new JSONObject("{\"root\":{\"item\":{\"id\":\"01\"},\"id\":[\"01\",\"1\",\"00\",\"0\"],\"title\":\"True\"}}");
+        final JSONObject expected = new JSONObject("{\"root\":{\"item\":{\"replacement\":\"the_rest\"},\"id\":[\"01\",1,\"00\",0],\"title\":True}}");
         final Reader original = new StringReader(originalXml);
         final JSONObject replacement = new JSONObject();
         replacement.put("replacement", "the_rest");
     	final JSONObject actual_true = XML.toJSONObject(original, new JSONPointer("/root/item"), replacement);
     	
-    	final JSONObject expected = new JSONObject();
-        JSONObject item = new JSONObject();
-        item.put("item", replacement);
-        expected.put("root", item);
-        
-        assertTrue("The test result for toJSONObjectWithReplacement with correct path: ", expected.equals(actual_true));
+    	Util.compareActualVsExpectedJsonObjects(actual_true, expected);
         
         JSONObject actual_false = null;
         try {
