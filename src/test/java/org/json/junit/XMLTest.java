@@ -44,6 +44,8 @@ import java.util.Map;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.json.JSONPointer;
+import org.json.JSONPointerException;
 import org.json.JSONTokener;
 import org.json.XML;
 import org.json.XMLParserConfiguration;
@@ -1067,5 +1069,52 @@ public class XMLTest {
             });
             fail("Expected to be unable to modify the config");
         } catch (Exception ignored) { }
+    }
+    
+    @Test
+    public void testToJSONObjectWithPath() {
+    	final String originalXml = "<root><id>01</id><id>1</id><id>00</id><id>0</id><item id=\"01\"/><title>True</title></root>";
+       // final JSONObject expected = new JSONObject("{\"root\":{\"item\":{\"id\":\"01\"},\"id\":[\"01\",\"1\",\"00\",\"0\"],\"title\":\"True\"}}");
+        final Reader original = new StringReader(originalXml);
+    	final String actual_true = (String) XML.toJSONObject(original, new JSONPointer("/root/item/id"));
+    	final String expected = "01";  
+        
+        assertTrue("The test result for toJSONObjectWithPath with correct path.", expected.equals(actual_true));
+        
+        Object actual_false = null;
+        try {
+        	actual_false = XML.toJSONObject(original, new JSONPointer("/root/id"));
+        	assertTrue("Expect JSONPointerException!", false);
+        } catch (JSONPointerException e) {
+        	assertTrue("The test result for toJSONObjectWithPath with wrong path.",
+        			"cannot find obj on the path /root/id".equals(e.getMessage()));
+        }
+    }
+    
+    @Test
+    public void testToJSONObjectWithReplacement() {
+    	final String originalXml = "<root><id>01</id><id>1</id><id>00</id><id>0</id><item id=\"01\"/><title>True</title></root>";
+       // final JSONObject expected = new JSONObject("{\"root\":{\"item\":{\"id\":\"01\"},\"id\":[\"01\",\"1\",\"00\",\"0\"],\"title\":\"True\"}}");
+        final Reader original = new StringReader(originalXml);
+        final JSONObject replacement = new JSONObject();
+        replacement.put("replacement", "the_rest");
+    	final JSONObject actual_true = XML.toJSONObject(original, new JSONPointer("/root/item"), replacement);
+    	
+    	final JSONObject expected = new JSONObject();
+        JSONObject item = new JSONObject();
+        item.put("item", replacement);
+        expected.put("root", item);
+        
+        assertTrue("The test result for toJSONObjectWithReplacement with correct path: ", expected.equals(actual_true));
+        
+        JSONObject actual_false = null;
+        try {
+        	actual_false = XML.toJSONObject(original, new JSONPointer("/root/id"), replacement);
+        	assertTrue("Expect JSONPointerException!", false);
+        } catch (JSONPointerException e) {
+        	assertTrue("The test result for toJSONObjectWithPath with wrong path.",
+        			"cannot find obj on the path /root/id".equals(e.getMessage()));
+        }
+       
     }
 }

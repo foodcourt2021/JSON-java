@@ -29,6 +29,7 @@ import java.io.StringReader;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.nio.file.Path;
 import java.util.Iterator;
 
 
@@ -597,7 +598,72 @@ public class XML {
     public static JSONObject toJSONObject(Reader reader) throws JSONException {
         return toJSONObject(reader, XMLParserConfiguration.ORIGINAL);
     }
+    
+    /*
+     * MileStone2 find object on the path in JSONPointer
+     */
+    public static Object toJSONObject(Reader reader, JSONPointer path) throws JSONException, JSONPointerException{      
+    	JSONObject jo = new JSONObject();
+        XMLTokener x = new XMLTokener(reader);
+        Object obj = null;
+       
+        while (x.more()) {
+            x.skipPast("<");
+            if(x.more()) {
+                parse(x, jo, null, XMLParserConfiguration.ORIGINAL);
+                try {
+                	obj = path.queryFrom(jo);
+                	if(obj != null) 
+                    	return obj;
+                }catch(JSONPointerException e) {
+                	continue;
+                }
+                
+            }
+        }
+        throw new JSONPointerException("cannot find obj on the path " + path.toString());
+    
+    }
+    
+    /*
+     * MileStone2 find object on the path in JSONPointer
+     */
 
+    public static JSONObject toJSONObject(Reader reader, JSONPointer path, JSONObject replacement) {
+    	JSONObject jo = new JSONObject();
+    	//JSONObject jo = toJSONObject(reader, XMLParserConfiguration.ORIGINAL);
+        XMLTokener x = new XMLTokener(reader);
+        JSONPointer jp = new JSONPointer( Path.of(path.toString()).getParent().toString());
+        Object obj = null;
+        
+        
+        while (x.more()) {
+            x.skipPast("<");
+            if(x.more()) {
+                parse(x, jo, null, XMLParserConfiguration.ORIGINAL);
+                try {
+                	obj = jp.queryFrom(jo);
+                	if(obj != null) {
+                		String base = Path.of(path.toString()).getFileName().toString();
+	 					
+	 		 		   	if(obj instanceof JSONObject) {
+	 		 			  ((JSONObject) obj).put(base,replacement);
+	 		 		   	}else if (obj instanceof JSONArray) {
+	 		 			  ((JSONArray) obj).put(Integer.valueOf(base), replacement);
+	 		 		   	}else if (obj instanceof String) {
+	// 			 		
+	 		 		   	}
+	 		 		   	return jo;
+                	}
+                }catch(JSONPointerException e) {
+                	continue;
+                }
+                
+            }
+        }
+        throw new JSONPointerException("cannot find obj on the path " + path.toString());
+    	
+    }
     /**
      * Convert a well-formed (but not necessarily valid) XML into a
      * JSONObject. Some information may be lost in this transformation because
