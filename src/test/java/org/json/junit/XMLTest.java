@@ -54,7 +54,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-
+import java.util.function.Function;
 /**
  * Tests for JSON-Java XML.java
  * Note: noSpace() will be tested by JSONMLTest
@@ -1112,4 +1112,64 @@ public class XMLTest {
         }
        
     }
+    
+    /**
+     * Milestone 3:
+     * Tests to verify the keyTransformer works
+     */
+    @Test
+    public void testKeyTransformer() {
+        System.out.println("Hello testKeyTransformer");
+        Function<String, String> keyTransformer = (key) -> "swe262_"+key.toString();
+
+        String xmlStr =
+                "<?xml version=\"1.0\"?>"+
+                "<catalog>"+
+                "   <book id=\"bk100\">"+
+                "      <author>Austen, Jane</author>"+
+                "      <title>Pride and Prejudice</title>"+
+                "      <genre>Romance</genre>"+
+                "   </book>"+
+                "   <book id=\"bk101\">"+
+                "      <author>Gambardella, Matthew</author>"+
+                "      <title>XML Developer's Guide</title>"+
+                "      <genre>Computer</genre>"+
+                "   </book>"+
+                "</catalog>"+
+                "<catalog2>"+
+                "   <book id=\"bk102\">"+
+                "      <author>Ralls, Kim</author>"+
+                "      <title>Midnight Rain</title>"+
+                "      <genre>Fantasy</genre>"+
+                "   </book>"+
+                "</catalog2>";
+
+        String xmlStrExpected =
+                "<?xml version=\"1.0\"?>"+
+                "<swe262_catalog>"+
+                "   <swe262_book swe262_id=\"bk100\">"+
+                "      <swe262_author>Austen, Jane</swe262_author>"+
+                "      <swe262_title>Pride and Prejudice</swe262_title>"+
+                "      <swe262_genre>Romance</swe262_genre>"+
+                "   </swe262_book>"+
+                "   <swe262_book swe262_id=\"bk101\">"+
+                "      <swe262_author>Gambardella, Matthew</swe262_author>"+
+                "      <swe262_title>XML Developer's Guide</swe262_title>"+
+                "      <swe262_genre>Computer</swe262_genre>"+
+                "   </swe262_book>"+
+                "</swe262_catalog>"+
+                "<swe262_catalog2>"+
+                "   <swe262_book swe262_id=\"bk102\">"+
+                "      <swe262_author>Ralls, Kim</swe262_author>"+
+                "      <swe262_title>Midnight Rain</swe262_title>"+
+                "      <swe262_genre>Fantasy</swe262_genre>"+
+                "   </swe262_book>"+
+                "</swe262_catalog2>";
+
+        JSONObject jo = XML.toJSONObject(new StringReader(xmlStr), keyTransformer);
+        System.out.println(jo.toString(4));
+        JSONObject swe262Jo = XML.toJSONObject(new StringReader(xmlStrExpected));
+        Util.compareActualVsExpectedJsonObjects(jo, swe262Jo);
+    }
+
 }
