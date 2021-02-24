@@ -36,16 +36,19 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 /**
  * A JSONObject is an unordered collection of name/value pairs. Its external
@@ -2645,4 +2648,39 @@ public class JSONObject {
                 "JSONObject[" + quote(key) + "] is not a " + valueType + " (" + value + ")."
                 , cause);
     }
+    
+    /**
+    * Milestone 4
+    *
+    * This method uses DFS to traverse the current JSON object
+    * return the stream of sub JSON object as JSONNode
+    *
+    * @return A stream of JSONNode object
+    */
+    public Stream<JSONNode> toStream() {
+       List<JSONNode> list = new ArrayList<>();
+       traverseDFS(this, "", list);
+       return list.stream();
+    }
+
+    /**
+    * This method do the real DFS traverse
+    * @param o the object it currently visits
+    * @param path the path from the top level
+    * @param list the list of node to append the new node
+    */
+    public void traverseDFS(Object o, String path, List<JSONNode> list) {
+       if (o instanceof JSONObject) {
+           JSONObject jo = (JSONObject) o;
+           for (String key: jo.keySet())
+               traverseDFS(jo.get(key), path+"/"+key, list);
+           list.add(new JSONNode(jo, path));
+       } else if (o instanceof JSONArray) {
+           JSONArray ja = (JSONArray) o;
+           for (int i = 0; i < ja.length(); i++) {
+               traverseDFS(ja.get(i), path+"/"+String.valueOf(i), list);
+           }
+       }
+    }
+
 }
