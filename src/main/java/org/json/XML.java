@@ -31,6 +31,8 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.file.Path;
 import java.util.Iterator;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 /**
@@ -879,7 +881,34 @@ public class XML {
        }
        return jo;
    }
-   
+
+    /**
+     * Milestone 5: Asynchronize interface
+     * reference: Modern Java in Action Chapter 16
+     * reference: https://mincong.io/2020/05/30/exception-handling-in-completable-future/
+     */
+    public static CompletableFuture<String> toJSONObject(Reader aReader,
+                                                         Function<JSONObject, String> function,
+                                                         Function<Throwable, String> errorHandler) {
+        return CompletableFuture.supplyAsync(() -> toJSONObjectDelayedProcessing(aReader, 2))
+                .handle((jo, ex) -> {
+                    if (ex != null)
+                        return errorHandler.apply(ex);
+                    else
+                        return function.apply(jo);
+                });
+    }
+
+    private static JSONObject toJSONObjectDelayedProcessing(Reader reader, int delay) {
+        try {
+            TimeUnit.SECONDS.sleep(delay);
+            return toJSONObject(reader);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     /**
      * Convert a well-formed (but not necessarily valid) XML into a
      * JSONObject. Some information may be lost in this transformation because
